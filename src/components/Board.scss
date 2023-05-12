@@ -1,4 +1,4 @@
-@import "./Tile.scss";
+$cell-size: 100px;
 
 .board {
     display: grid;
@@ -13,4 +13,22 @@
 
 .light {
     background-color: #f0d9b5;
+}
+
+
+.piece {
+    width: $cell-size;
+    height: $cell-size;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: $cell-size $cell-size;
+}
+
+.piece:active {
+    cursor: grabbing;
+}
+
+.piece:hover+.dark {
+    color: red;
 }
