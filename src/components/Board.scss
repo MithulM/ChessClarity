@@ -1,0 +1,16 @@
+@import "./Tile.scss";
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, $cell-size);
+    grid-template-rows: repeat(8, $cell-size);
+    place-content: center;
+}
+
+.dark {
+    background-color: #b58863;
+}
+
+.light {
+    background-color: #f0d9b5;
+}

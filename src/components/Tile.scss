@@ -1,0 +1,22 @@
+$cell-size: 100px;
+
+.piece {
+    width: $cell-size;
+    height: $cell-size;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: $cell-size $cell-size;
+}
+
+.piece:active {
+    cursor: grabbing;
+}
+
+.piece[data-current] {
+    border: 1px solid red;
+}
+
+.piece:hover+.dark {
+    color: red;
+}
