@@ -40,7 +40,7 @@ const ChessBoard = () => {
   const [pieceHeld, setPieceHeld] = useState<HTMLElement | null>(null);
   const [dragging, setDragging] = useState<boolean>(false);
   const [grabLoc, setGrabLoc] = useState<[number, number]>([-1, -1]);
-  const [newLoc, setNewLoc] = useState<[number, number]>([-1, -1]);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   // Position datas
   const [board, setBoard] = useState<Piece[][]>([
@@ -185,50 +185,76 @@ const ChessBoard = () => {
     setDragging(true);
   }
 
-  const dropPiece: (e: React.MouseEvent) => void = (e) => {
+  const updatePiece: (e: React.DragEvent, x: number, y: number) => void = (e, x, y) => {
+    console.log(x, y);
     if (dragging && pieceHeld) {
       // set board
-      let tempBoard: Piece[][] = [[], [], [], [], [], [], [], []];
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          tempBoard[y].push(board[y][x]);
-        }
-      }
-      if (newLoc[0] !== -1 && newLoc[1] !== -1) {
-        tempBoard[newLoc[0]][newLoc[1]] = tempBoard[grabLoc[1]][grabLoc[0]];
-        tempBoard[grabLoc[0]][grabLoc[1]] = "#";
-      }
+    }
+  };
+
+  const dropPiece: (e: React.MouseEvent) => void = (e) => {
+    if (dragging && pieceHeld) {
       pieceHeld.style.left = `auto`;
       pieceHeld.style.top = `auto`;
       pieceHeld.style.position = "static";
       pieceHeld.style.zIndex = `0`;
-      setBoard(tempBoard);
       setPieceHeld(null);
       setDragging(false);
-      setNewLoc([-1, -1]);
+
+      // Get the div that has board as className
+      const boardDiv = boardRef.current;
+      if (boardDiv) {
+        // Get the top left coordinates of the board
+        const boardRect = boardDiv.getBoundingClientRect();
+        const boardTopLeftX = boardRect.left;
+        const boardTopLeftY = boardRect.top;
+
+        // Get the size of the board's square grid from template columns
+        const squareSize =
+          parseInt(
+            getComputedStyle(boardDiv)
+              .getPropertyValue("grid-template-columns")
+              .split(" ")[0]
+          ) || 0;
+
+        // Check if the current mouse location is outside the whole board
+        if (
+          e.clientX < boardTopLeftX ||
+          e.clientX > boardTopLeftX + squareSize * cols ||
+          e.clientY < boardTopLeftY ||
+          e.clientY > boardTopLeftY + squareSize * rows
+        ) {
+          // The current mouse location is outside the whole board
+          return;
+        } else {
+          // Set x and y variables of the board piece location from the top left coordinates of the board
+          const y = Math.floor((e.clientX - boardTopLeftX) / squareSize);
+          const x = Math.floor((e.clientY - boardTopLeftY) / squareSize);
+
+          let tempBoard: Piece[][] = [[], [], [], [], [], [], [], []];
+          for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+              tempBoard[y].push(board[y][x]);
+            }
+          }
+          tempBoard[x][y] = tempBoard[grabLoc[0]][grabLoc[1]];
+          tempBoard[grabLoc[0]][grabLoc[1]] = "#";
+          setBoard(tempBoard);
+        }
+      }
     }
   };
 
-  const grabPieceEnter: (e: React.MouseEvent, coordX: number, coordY: number) => void = (e, coordX, coordY) => {
+  const dragOver: (e: React.DragEvent) => void = (e) => {
+    console.log(e);
     e.preventDefault();
-    if (dragging) {
-      console.log("Entered: ", coordX, coordY);
-      setNewLoc([coordX, coordY]);
-    }
-  }
-
-  const grabPieceExit: (e: React.MouseEvent, coordX: number, coordY: number) => void = (e, coordX, coordY) => {
-    if (dragging) {
-      console.log("Exit: ", coordX, coordY);
-      setNewLoc([-1, -1]);
-    }
   }
 
   return (
-    <div className="board">
+    <div ref={boardRef} className="board">
       {board.map((row, x) => (
         row.map((square, y) => (
-          <div key={x * rows + y} className={(x * rows + y + x) & 1 ? "dark" : "light"} onDragOver={(e) => (grabPieceEnter(e, x, y))} onDragLeave={(e) => (grabPieceExit(e, x, y))}>
+          <div key={x * rows + y} className={(x * rows + y + x) & 1 ? "dark" : "light"} onDrop={(e) => (updatePiece(e, x, y))} onDragOver={(e) => dragOver(e)}>
             {square !== "#" &&
               <div
                 className="piece"
